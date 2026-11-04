@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Колір і дизайн — інтерактивне завдання</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f4f6fb;--card:#fff;--tx:#1b2433;--mu:#5d6b82;--ac:#2f6fed;--bd:#d8dfec;--ok:#1f9d55;--bad:#d64545}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#12161f;--card:#1b2130;--tx:#e8ecf5;--mu:#9aa7bf;--ac:#6b9bff;--bd:#2c3547;--ok:#4cc98a;--bad:#ff7b7b}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#12161f;--card:#1b2130;--tx:#e8ecf5;--mu:#9aa7bf;--ac:#6b9bff;--bd:#2c3547;--ok:#4cc98a;--bad:#ff7b7b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:760px;margin:0 auto;padding:16px}
+h1{font-size:1.4rem;margin:.2em 0}h2{font-size:1.1rem;margin:0 0 .6em}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:16px;margin:14px 0}
+.mu{color:var(--mu);font-size:.92rem}
+.it{padding:10px 0;border-top:1px solid var(--bd)}.it:first-of-type{border-top:0}
+select,input[type=text]{width:100%;margin-top:6px;padding:9px;border-radius:9px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);font:inherit}
+button{background:var(--ac);color:#fff;border:0;border-radius:10px;padding:11px 18px;font:inherit;font-weight:600;cursor:pointer;margin:6px 6px 0 0}
+button.sec{background:transparent;color:var(--ac);border:1px solid var(--ac)}
+.strip{display:flex;height:34px;border-radius:8px;overflow:hidden;margin:6px 0;border:1px solid var(--bd)}.strip i{flex:1}
+.sw{display:inline-block;width:46px;height:46px;border-radius:10px;border:1px solid var(--bd);vertical-align:middle;margin-right:8px}
+.mix{display:grid;grid-template-columns:auto 1fr 3ch;gap:4px 10px;align-items:center;margin-top:6px}.mix input{width:100%}
+.bar{height:10px;background:var(--bd);border-radius:6px;overflow:hidden}.bar b{display:block;height:100%;background:var(--ac);width:0;transition:width .3s}
+#msg{font-weight:600}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.hide{display:none}.er{color:var(--bad)}
+button:disabled{opacity:.4;cursor:default}.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}.tabs button{margin:0;padding:8px 14px;background:transparent;color:var(--ac);border:1px solid var(--ac)}.tabs button.on{background:var(--ac);color:#fff}.tabs button.dn::after{content:" ✓"}.pg{display:flex;justify-content:space-between;gap:8px}.pg button{margin:0}
+.tb button{padding:7px 11px;margin:3px 4px 0 0;font-size:.9rem}.tb label{margin-right:12px;font-size:.9rem}
+svg.ed{display:block;width:100%;height:auto;background:#fff;border:1px solid var(--bd);border-radius:10px;touch-action:none;margin-top:8px}
+</style>
+</head>
+<body>
+<main>
+<h1>🎨 Колір і дизайн</h1>
+<p class="mu">Інформатика, «Комп’ютерна графіка», 10 (11) клас · теми: «Колір. Теорія кольору», «Основи теорії дизайну»</p>
+
+<section id="reg" class="card">
+<h2>Хто виконує завдання?</h2>
+<input type="text" id="sn" placeholder="Прізвище"><input type="text" id="fn" placeholder="Ім’я"><input type="text" id="cl" placeholder="Клас (наприклад, 10-А)">
+<button id="go">Почати</button><div id="rmsg" class="er"></div>
+</section>
+
+<div id="work" class="hide">
+<div class="mu">Прогрес</div><div class="bar"><b id="pb"></b></div>
+<div class="tabs" id="tabs"></div><div id="tasks"></div><div class="pg"><button id="prev" class="sec">← Назад</button><button id="next">Далі →</button></div>
+<div class="card hide" id="ck">
+<button id="chk">Перевірити</button><button id="fin" class="sec hide">Завершити й показати підсумок</button>
+<p id="msg"></p>
+</div>
+</div>
+
+<section id="sum" class="card hide"></section>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+const TASK='Колір і дизайн'; // назва аркуша з результатами
+const SCRIPT_URL='https://script.google.com/macros/s/AKfycby5JuoBDhkyMaeFKb3bjrhbHsIZIhM4f741IKFEZzoxtfYlNnycEXdbmtxjUtl1QQYyRw/exec';
+const KEY='змініть-на-свій-ключ'; // має збігатися з SECRET у Apps Script
+
+const strip=c=>'<div class="strip">'+c.map(x=>'<i style="background:'+x+'"></i>').join('')+'</div>';
+const sw=c=>'<span class="sw" style="background:'+c+'"></span>';
+const L=['Ясність (світлість)','Яскравість','Насиченість','Кольоровий тон'];
+const H=['Однотонна гармонія','Гармонія споріднених кольорів','Гармонія контрастних кольорів'];
+const P=['Енергійний, збуджує, піднімає настрій','Зменшує втомлюваність, сприяє розумовій діяльності','Заспокоює нервову систему, збільшує працездатність','Знижує пульс і тиск, може викликати розчарованість','Таємничий, поглинає інші кольори; традиційно колір страху, скорботи й жалоби','Символ чистоти й невинності; пом’якшує емоції, допомагає від стресу'];
+const LW=['Закон масштабу','Закон пропорційності','Закон контрасту'];
+const PR=['Ритм','Симетрія','Асиметрія','Динаміка'];
+// розділ: [назва, підказка, [ [питання, варіанти, правильний індекс, додатковий HTML] ]]
+const SEC=[
+['1. Характеристики кольору','Яку характеристику кольору описано?',[
+['Ступінь близькості кольору до білого',L,0],
+['Червоний колір при зменшенні цієї характеристики поступово наближається до чорного',L,1,strip(['#ff0000','#cc0000','#990000','#660000','#330000','#000'])],
+['Зелений колір при зменшенні цієї характеристики наближається до сірого',L,2,strip(['#00ff00','#1ae51a','#33cc33','#4db24d','#669966','#808080'])],
+['Зміна цієї характеристики перетворює жовтий колір на салатовий (в один бік) або помаранчевий (в інший)',L,3,strip(['#80ff00','#bfff00','#ffff00','#ffbf00','#ff8000','#ff4000'])]]],
+['2. Колірні моделі','Налаштуйте повзунки R, G, B так, щоб отримати колір, а потім дайте відповіді на питання.',[]],
+['3. Гармонія кольорів','Який вид гармонії зображено? Також дайте відповідь на питання про поєднання.',[
+['Палітра А',H,0,strip(['#0b5d2a','#157a3a','#2da24f','#6fcf8a','#b8ebc6'])],
+['Палітра Б',H,1,strip(['#f9d71c','#fbb41a','#f58220','#ee4b23','#d92a2a'])],
+['Палітра В',H,2,strip(['#1e40af','#f97316'])],
+['Палітра Г',H,1,strip(['#2a3fb5','#5a3fc0','#8a3fc0','#b03fa8'])],
+['Скільки основних поєднань кольорів виділяють у теорії гармонійних колірних поєднань?',['3','4','6','12'],2]]],
+['4. Психологія кольору','Яка характеристика відповідає кольору?',[
+['Червоний',P,0,sw('#e00')],
+['Жовтий',P,1,sw('#fe0')],
+['Зелений',P,2,sw('#080')],
+['Блакитний',P,3,sw('#09d')],
+['Чорний',P,4,sw('#000')],
+['Білий',P,5,sw('#fff')]]],
+['5. Основи теорії дизайну','Знайдіть відповідність.',[
+['Предмети мають однакову форму, але різні розміри через функціональні вимоги',LW,0],
+['Інтуїтивна або свідома організація форми на основі кратних і простих співрозмірних величин',LW,1],
+['Чітко виявлена протилежність властивостей предмета, стану, дії',LW,2],
+['Чіткий порядок у розташуванні елементів, що дає порядок, закінченість, цілісність',PR,1],
+['Невпорядкованість, незавершеність; «індивідуальна» за своєю суттю',PR,2],
+['Властивість, характерна для багатьох явищ природи; один із засобів організації художньої форми',PR,0],
+['Протилежність статики (урівноваженості); «зоровий рух» у напрямі переважаючої величини',PR,3],
+['Природна фактура кори дерева — це фактура:',['природна','технологічна'],0],
+['Фактура, одержана шліфуванням або карбуванням матеріалу, — це фактура:',['природна','технологічна'],1],
+['Композиція, розташована в одній площині, — це:',['фронтальна','об’ємна','глибинно-просторова'],0]]]
+];
+const MIX=[['Жовтий',[255,255,0]],['Блакитний (Cyan)',[0,255,255]],['Пурпурний (Magenta)',[255,0,255]],['Білий',[255,255,255]]];
+const MCQ2=[
+['Скільки різних кольорів можна закодувати в моделі RGB (по 0–255 для кожного з трьох кольорів)?',['256','65 536','16 777 216','1 000 000'],2],
+['Яку модель застосовують для підготовки зображень до кольорового друку?',['RGB','CMYK','HSB'],1],
+['У моделі HSB параметр Hue (Відтінок) кодується числом:',['від 0 до 100','від 0 до 255','від 0 до 360°'],2],
+['Яку колірну модель вважають найближчою до сприйняття кольору людиною?',['RGB','CMYK','HSB'],2]];
+
+const items=[],starts=[];let attempts=0,allErr=0,started=false,cur=0;
+const $=id=>document.getElementById(id);
+
+function build(){
+ const box=$('tasks');
+ SEC.forEach((s,si)=>{
+  starts.push(items.length);
+  const c=document.createElement('div');c.className='card';
+  c.innerHTML='<h2>'+s[0]+'</h2><div class="mu">'+s[1]+'</div>';
+  if(si===1){
+   MIX.forEach(m=>{
+    const d=document.createElement('div');d.className='it';
+    d.innerHTML='<div>'+sw('rgb('+m[1]+')')+'Отримайте колір: <b>'+m[0]+'</b></div><div class="mix"></div>';
+    const mx=d.querySelector('.mix'),sl=[];
+    ['R','G','B'].forEach(n=>{const l=document.createElement('b');l.textContent=n;const r=document.createElement('input');r.type='range';r.min=0;r.max=255;r.value=0;const v=document.createElement('span');v.textContent='0';
+     r.oninput=()=>{v.textContent=r.value;upd()};sl.push(r);mx.append(l,r,v)});
+    items.push({label:'Модель RGB: '+m[0],ok:()=>sl.every((r,i)=>+r.value===m[1][i]),val:()=>'R,G,B = '+sl.map(r=>r.value).join(', '),touched:()=>sl.some(r=>+r.value>0)});
+    c.append(d);
+   });
+  }
+  const list=si===1?MCQ2:s[2];
+  list.forEach(q=>{
+   const d=document.createElement('div');d.className='it';
+   d.innerHTML='<div>'+q[0]+'</div>'+(q[3]||'');
+   const sel=document.createElement('select');
+   sel.innerHTML='<option value="">— оберіть —</option>'+q[1].map((o,i)=>'<option value="'+i+'">'+o+'</option>').join('');
+   sel.onchange=upd;d.append(sel);c.append(d);
+   items.push({label:q[0],ok:()=>sel.value!==''&&+sel.value===q[2],val:()=>sel.value===''?'не відповів(ла)':q[1][sel.value],touched:()=>sel.value!==''});
+  });
+  box.append(c);
+ });
+ starts.push(items.length);
+ buildEditor(box);
+}
+function buildEditor(box){
+ const SM=[['t',210,200,280,0,'#000'],['c',210,250,84,0,'#fff'],['c',420,190,190,0,'#000'],['c',420,190,68,0,'#fff'],['r',445,335,120,0,'#000'],['t',500,140,100,0,'#fff'],['c',60,70,48,0,'#000'],['c',290,60,28,0,'#fff'],['l',567,130,110,90,'#000'],['l',300,215,272,14.5,'#000'],['l',320,197,169,14.5,'#fff']].map(a=>({t:a[0],x:a[1],y:a[2],s:a[3],r:a[4],f:a[5]}));
+ const N=SM.length,NEED=Math.ceil(N*.8);
+ const c=document.createElement('div');c.className='card';
+ c.innerHTML='<h2>6. Практична робота: контрастна композиція за зразком</h2><div class="mu">Відтворіть композицію зі зразка якомога точніше: ті самі фігури, кольори (чорний/білий), розміри, поворот і розташування. Сітка (клітинка 50 × 50) допоможе орієнтуватися. Якщо одна фігура має лежати поверх іншої, скористайтеся кнопкою «На передній план».</div><p><b>Зразок</b></p><svg class="ed" id="sm" viewBox="0 0 600 400" role="img" aria-label="Зразок композиції з чорних і білих геометричних фігур"></svg><p><b>Ваша композиція</b></p><div class="tb" id="tb"></div><svg class="ed" id="ed" viewBox="0 0 600 400"></svg><div class="tb" id="pr"></div><div class="mu" id="cnt"></div>';
+ box.append(c);
+ const svg=c.querySelector('#ed'),tb=c.querySelector('#tb'),pr=c.querySelector('#pr'),cnt=c.querySelector('#cnt');
+ let sh=[],sel=null,drag=null,gd='';
+ for(let i=50;i<600;i+=50)gd+='M'+i+' 0V400';for(let j=50;j<400;j+=50)gd+='M0 '+j+'H600';
+ const GR='<path d="'+gd+'" stroke="#b9c2d6" stroke-width="1" fill="none"/>',BG='<rect width="600" height="400" fill="#fff"/>';
+ const TY={c:'⬤ Коло',t:'▲ Трикутник',s:'■ Квадрат',r:'▬ Прямокутник',l:'╱ Лінія'};
+ const geo=f=>{const s=f.s;
+  if(f.t==='c')return '<circle r="'+s/2+'"';
+  if(f.t==='t')return '<polygon points="0,'+-s/2+' '+s/2+','+s/2+' '+-s/2+','+s/2+'"';
+  if(f.t==='s')return '<rect x="'+-s/2+'" y="'+-s/2+'" width="'+s+'" height="'+s+'"';
+  if(f.t==='r')return '<rect x="'+-s*.9+'" y="'+-s*.25+'" width="'+s*1.8+'" height="'+s*.5+'"';
+  return '<rect x="'+-s*1.1+'" y="-4" width="'+s*2.2+'" height="8"'};
+ const shp=(f,i,ex,cur)=>'<g data-i="'+i+'" transform="translate('+f.x+' '+f.y+') rotate('+f.r+')"'+(cur?' style="cursor:move"':'')+'>'+geo(f)+' fill="'+f.f+'" stroke="#000" stroke-width="2"/>'+ex+'</g>';
+ c.querySelector('#sm').innerHTML=BG+GR+SM.map((f,i)=>shp(f,i,'',0)).join('');
+ function draw(ss){
+  svg.innerHTML=BG+(ss?GR:'')+sh.map((f,i)=>shp(f,i,ss&&sel===i?'<circle r="'+(f.s*.75+8)+'" fill="none" stroke="#2f6fed" stroke-width="2" stroke-dasharray="6 4" pointer-events="none"/>':'',1)).join('');
+  cnt.textContent='Фігур на полотні: '+sh.length+' (у зразку: '+N+')';upd();
+ }
+ function props(){pr.style.display=sel===null?'none':'block';if(sel!==null){sz.value=sh[sel].s;ro.value=sh[sel].r;fb.textContent=sh[sel].f==='#000'?'Зробити білою':'Зробити чорною'}}
+ Object.keys(TY).forEach(k=>{const b=document.createElement('button');b.textContent=TY[k];b.onclick=()=>{sh.push({t:k,x:300,y:200,s:80,r:0,f:'#000'});sel=sh.length-1;draw(1);props()};tb.append(b)});
+ const cl=document.createElement('button');cl.className='sec';cl.textContent='Очистити';cl.onclick=()=>{sh=[];sel=null;draw(1);props()};tb.append(cl);
+ pr.innerHTML='<label>Розмір <input type="range" id="sz" min="20" max="300"></label><label>Поворот <input type="range" id="ro" min="0" max="360" step="0.5"></label>';
+ const sz=pr.querySelector('#sz'),ro=pr.querySelector('#ro');
+ const mk=t=>{const b=document.createElement('button');b.className='sec';b.textContent=t;pr.append(b);return b};
+ const fb=mk(''),up=mk('На передній план'),del=mk('Видалити фігуру');
+ sz.oninput=()=>{sh[sel].s=+sz.value;draw(1)};ro.oninput=()=>{sh[sel].r=+ro.value;draw(1)};
+ fb.onclick=()=>{sh[sel].f=sh[sel].f==='#000'?'#fff':'#000';draw(1);props()};
+ up.onclick=()=>{sh.push(sh.splice(sel,1)[0]);sel=sh.length-1;draw(1)};
+ del.onclick=()=>{sh.splice(sel,1);sel=null;draw(1);props()};
+ const pt=e=>{const r=svg.getBoundingClientRect();return{x:(e.clientX-r.left)*600/r.width,y:(e.clientY-r.top)*400/r.height}};
+ svg.onpointerdown=e=>{const g=e.target.closest('g[data-i]');if(g){sel=+g.dataset.i;const p=pt(e);drag={dx:sh[sel].x-p.x,dy:sh[sel].y-p.y};svg.setPointerCapture(e.pointerId)}else sel=null;draw(1);props()};
+ svg.onpointermove=e=>{if(drag&&sel!==null){const p=pt(e);sh[sel].x=Math.round(Math.max(0,Math.min(600,p.x+drag.dx)));sh[sel].y=Math.round(Math.max(0,Math.min(400,p.y+drag.dy)));draw(1)}};
+ svg.onpointerup=()=>{drag=null};
+ const PER={t:360,s:90,r:180,l:180};
+ const per=(d,p)=>{d=Math.abs(d)%p;return Math.min(d,p-d)};
+ const ev=()=>{const used=new Set();let ft=0,pos=0,full=0;
+  SM.forEach(a=>{let b=-1,bd=1e9;sh.forEach((f,i)=>{if(used.has(i)||f.t!==a.t||f.f!==a.f)return;const d=Math.hypot(f.x-a.x,f.y-a.y);if(d<bd){bd=d;b=i}});
+   if(b<0)return;used.add(b);ft++;const f=sh[b];
+   if(bd<=40){pos++;const rd=a.t==='c'?0:per(f.r-a.r,PER[a.t]);if(Math.abs(f.s-a.s)<=a.s*.25&&rd<=12)full++}});
+  const n=t=>sh.filter(f=>f.t===t).length,m=t=>SM.filter(f=>f.t===t).length;
+  return{n:sh.length,ft,pos,full,types:Object.keys(TY).every(t=>n(t)===m(t))}};
+ const v=()=>{const e=ev();return 'фігур: '+e.n+' (у зразку '+N+'); збігів за видом і кольором: '+e.ft+'; правильно розташованих: '+e.pos+'; з правильним розміром і поворотом: '+e.full};
+ [['кількість і види фігур збігаються зі зразком ('+N+' фігур)',e=>e.types&&e.n===N],['кольори фігур (чорний/білий) збігаються зі зразком',e=>e.ft===N],['розташування фігур відповідає зразку (не менш ніж '+NEED+' з '+N+')',e=>e.pos>=NEED],['розміри й поворот фігур відповідають зразку (не менш ніж '+NEED+' з '+N+')',e=>e.full>=NEED]]
+  .forEach(([l,fn])=>items.push({label:'Композиція — '+l,ok:()=>fn(ev()),val:v,touched:()=>sh.length>0}));
+ window.snapComp=()=>{if(!sh.length)return '';draw(0);const s=new XMLSerializer().serializeToString(svg);draw(1);return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(s)};
+ draw(1);props();
+}
+function upd(){[...$('tabs').children].forEach((b,k)=>b.classList.toggle('dn',secDone(k)));const n=items.filter(i=>i.touched()).length;$('pb').style.width=Math.round(n/items.length*100)+'%'}
+const now=()=>{const d=new Date();return{date:d.toLocaleDateString('uk-UA'),time:d.toLocaleTimeString('uk-UA')}};
+function send(task,fields,image){
+ const body=JSON.stringify({key:KEY,task,fields,image});
+ return fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body}).then(()=>true).catch(()=>false);
+}
+const who=()=>({surname:$('sn').value.trim(),name:$('fn').value.trim(),klass:$('cl').value.trim()});
+$('go').onclick=()=>{
+ const w=who();
+ if(!w.surname||!w.name||!w.klass){$('rmsg').textContent='Заповніть прізвище, ім’я та клас.';return}
+ send('Приєднання',{'ПІБ учня':w.surname+' '+w.name,'Клас':w.klass,'Назва проєкту':TASK});
+ $('reg').classList.add('hide');$('work').classList.remove('hide');
+ if(!started){build();started=true;initNav()}
+};
+function secDone(i){const a=starts[i],b=i+1<starts.length?starts[i+1]:items.length;return items.slice(a,b).every(x=>x.touched())}
+function show(i){
+ cur=i;const cs=[...$('tasks').children];cs.forEach((c,k)=>c.classList.toggle('hide',k!==i));
+ [...$('tabs').children].forEach((b,k)=>{b.classList.toggle('on',k===i);b.classList.toggle('dn',secDone(k))});
+ $('prev').disabled=i===0;$('next').disabled=i===cs.length-1;
+ $('ck').classList.toggle('hide',i!==cs.length-1);window.scrollTo(0,0);
+}
+function initNav(){
+ const n=$('tasks').children.length;
+ for(let k=0;k<n;k++){const b=document.createElement('button');b.textContent=k+1;b.onclick=()=>show(k);$('tabs').append(b)}
+ $('prev').onclick=()=>show(cur-1);$('next').onclick=()=>show(cur+1);show(0);
+}
+const PRAISE=['Чудова робота!','Майже ідеально — ще трохи, і буде максимум!','Гарний результат, перевірте ще раз уважно.','Хороший початок! Згадайте теорію з презентації та спробуйте ще раз.'];
+$('chk').onclick=()=>{
+ attempts++;const wrong=items.filter(i=>!i.ok());allErr+=wrong.length;
+ const p=1-wrong.length/items.length;
+ $('msg').innerHTML=wrong.length===0?'✅ Помилок немає. '+PRAISE[0]:'Кількість помилок: <span class="er">'+wrong.length+'</span>. '+(p>=.85?PRAISE[1]:p>=.6?PRAISE[2]:PRAISE[3]);
+ $('fin').classList.remove('hide');
+};
+let result=null;
+$('fin').onclick=()=>{
+ const wrong=items.filter(i=>!i.ok());const max=items.length,score=max-wrong.length;
+ const g=Math.max(1,Math.round(score/max*12)),w=who(),t=now();
+ const errs=wrong.map(i=>'• '+i.label+' — відповідь учня: '+i.val());
+ result={'Прізвище':w.surname,'Ім’я':w.name,'Клас':w.klass,'Бал':score+' з '+max,'Оцінка (12-бальна)':g,'Спроб':attempts,'Помилок в останній спробі':wrong.length,'Помилок за всі спроби':allErr,'Опис помилок':errs.join('\n')};
+ $('sum').innerHTML='<h2>Підсумок</h2><div>'+w.surname+' '+w.name+', '+w.klass+' · '+t.date+' '+t.time+'</div>'
+  +'<p><b>Результат:</b> '+score+' з '+max+' · <b>орієнтовна оцінка:</b> '+g+' з 12</p>'
+  +'<p>Спроб перевірки: '+attempts+' · помилок в останній спробі: '+wrong.length+'</p>'
+  +(wrong.length?'<div><b>Що було не так:</b><br>'+errs.map(e=>e.replace(/</g,'&lt;')).join('<br>')+'</div>':'<p>Усе виконано правильно! 🎉</p>')
+  +(window.snapComp&&window.snapComp()?'<p><b>Ваша композиція:</b><br><img alt="композиція" style="max-width:100%;border:1px solid var(--bd);border-radius:8px" src="'+window.snapComp()+'"></p>':'')
+  +'<p class="mu">Остаточна оцінка вчителя враховуватиме також кількість допущених помилок і виконаних спроб.</p>'
+  +'<button id="snd">Надіслати результат вчителю</button><button id="img" class="sec">Зберегти результат</button><div id="st" class="mu"></div>';
+ $('work').classList.add('hide');$('sum').classList.remove('hide');window.scrollTo(0,0);
+ $('snd').onclick=async()=>{$('st').textContent='Надсилання…';let img;try{img=await html2canvas($('sum'),{scale:1,backgroundColor:getComputedStyle(document.body).backgroundColor,ignoreElements:e=>e.tagName==='BUTTON'}).then(c=>c.toDataURL('image/png').split(',')[1])}catch(e){}
+ const ok=await send(TASK,result,img?{name:'Результат_'+w.surname+'_'+w.name,data:img}:undefined);$('st').textContent=ok?'✅ Результат надіслано.':'❌ Не вдалося надіслати. Збережіть результат як зображення й покажіть учителю.'};
+ $('img').onclick=()=>{
+  if(typeof html2canvas==='undefined'){$('st').textContent='Збереження зображення недоступне.';return}
+  html2canvas($('sum'),{ignoreElements:e=>e.tagName==='BUTTON',backgroundColor:getComputedStyle(document.body).backgroundColor}).then(c=>{const a=document.createElement('a');a.download='rezultat-'+w.surname+'.png';a.href=c.toDataURL();a.click()});
+ };
+};
+</script>
+</body>
+</html>
